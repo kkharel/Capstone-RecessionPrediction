@@ -1,45 +1,110 @@
-### Project Title
+# Predicting U.S. Economic Recessions with Machine Learning
+---
 
-**Author**
+**Author:** Kushal Kharel
 
-#### Executive summary
+---
+
+#### Executive Summary
+
+This project develops and evaluates a suite of machine learning models to predict U.S. economic recessions. Leveraging a comprehensive dataset of macroeconomic indicators and financial market data, the system performs rigorous time series preprocessing, feature engineering, and employs advanced cross-validation techniques to build robust predictive models. The primary goal is to provide timely and accurate recession forecasts, which can be invaluable for policymakers, businesses, and investors in navigating economic cycles.
 
 #### Rationale
-Why should anyone care about this question?
+
+Recessions, characterized by significant declines in economic activity, have profound impacts on employment, financial markets, and overall societal well-being. Early and accurate prediction of these downturns allows for proactive measures, such as monetary and fiscal policy adjustments, business contingency planning, and investment strategy re-evaluation. By building a reliable predictive model, this project aims to contribute to economic stability and informed decision-making, mitigating the adverse effects of unexpected economic contractions.
 
 #### Research Question
-What are you trying to answer?
+
+Can machine learning models, trained on preprocessed macroeconomic and financial time series data with appropriate time-series cross-validation, accurately predict the onset of U.S. economic recessions several months in advance?
 
 #### Data Sources
-What data will you use to answer you question?
+
+The project utilizes a diverse set of time series data from various sources:
+
+* **Federal Reserve Economic Data (FRED) API**:
+    * Industrial Production, Capacity Utilization, Real Gross Domestic Product
+    * Unemployment Rate, Total Nonfarm Employment, Labor Force Participation, Civilian Labor Force
+    * CPI (Inflation), Core CPI, PPI (Wholesale Inflation)
+    * Federal Funds Rate, Real M1/M2 Money Supply
+    * Treasury Yields (10-Year, 5-Year, 7-Year, 30-Year, 3-Year, 2-Year, 1-Year)
+    * Personal Consumption Expenditures, Real Disposable Personal Income, Total Consumer Credit, Trade Balance, Consumer Sentiment, Building Permits, Housing Starts, Median Sale Price New Houses, Nonfarm Business Sector Real Output Per Hour.
+* **External CSVs**:
+    * `gold.csv`: Historical Gold prices.
+    * `sp500.csv`: Historical S&P 500 index data.
+    * `dji.csv`: Historical Dow Jones Industrial Average (DJI) data.
 
 #### Methodology
-What methods are you using to answer the question?
+
+The methodology encompasses a multi-stage pipeline designed specifically for time series forecasting:
+
+1.  **Data Pulling & Cleaning**: Economic indicators are fetched from the FRED API. This data is then merged with financial market data (Gold, S&P 500, DJI). Initial cleaning involves handling missing values (e.g., forward-filling quarterly columns) and standardizing date formats.
+2.  **Time Series Preprocessing**:
+    * **Growth Detection**: Identifies features exhibiting exponential growth using correlation with time and variance checks.
+    * **Log Transformation**: Applies natural logarithm to features identified with exponential growth to stabilize variance and linearize trends.
+    * **Stationarity Enforcement**: Uses the Augmented Dickey-Fuller (ADF) test to check for stationarity. Non-stationary series are differenced (first or second order) to achieve stationarity, which is crucial for many time series models and statistical properties.
+3.  **Feature Engineering**: A comprehensive set of new features are created to capture various economic dynamics:
+    * **Lagged Features**: Past values of key indicators (e.g., 3 and 6-month lags) to capture historical trends.
+    * **Rolling Statistics**: Rolling means and standard deviations over various windows (e.g., 3 and 6 months) to reflect short-term trends, long-term trends, and volatility.
+    * **Yield Spreads**: Calculation of the difference between 10-Year and 2-Year Treasury yields, a well-known predictor of recessions.
+4.  **Data Preparation**: The processed and engineered data is then split chronologically into training and testing sets to ensure that the model is always evaluated on future, unseen data. The target variable (`recession`) is engineered to reflect future recessionary periods.
+5.  **Model Training & Hyperparameter Tuning**:
+    * A custom time-series cross-validation strategy is employed, where training is done on data up to a certain point, and validation is performed on subsequent, specific recessionary periods. This simulates real-world forecasting.
+    * **SMOTE (Synthetic Minority Over-sampling Technique)** is integrated into `imblearn.pipeline` to address class imbalance, a common issue in recession prediction (recessions are rare events).
+    * A range of classification models are trained and their hyperparameters are tuned using `BayesSearchCV` for efficient optimization:
+        * Logistic Regression
+        * Random Forest Classifier
+        * Bagging Classifier (with Decision Tree as base estimator)
+        * XGBoost Classifier
+        * Support Vector Classifier (SVC)
+        * K-Nearest Neighbors Classifier
+        * Voting Classifier
+    * Models are evaluated using F1-score (tuned with a custom threshold) as the primary metric, alongside precision, recall, accuracy, ROC AUC, and Average Precision.
 
 #### Results
-The correlation analysis reveals the strength and direction of linear relationships between various economic indicators and the occurrence of a recession. As expected, the recession variable has a perfect correlation with itself (1.0). Among the positively correlated features, the unemployment rate (0.198) and various Treasury yields such as the 30-year (0.148), 10-year (0.146), and federal funds rate (0.134) show mild positive associations with recessions. This suggests that during or just before recessions, interest rates and unemployment may rise slightly, possibly reflecting tightening financial conditions or deteriorating labor markets.
 
-Conversely, several variables exhibit moderate to strong negative correlations with recessions. Notably, consumer sentiment (-0.379) and the real GDP growth rate (-0.369) show the strongest negative correlations, indicating that consumer confidence and economic growth tend to decline significantly during recessionary periods. Other indicators such as building permits (-0.312), capacity utilization (-0.305), and housing starts (-0.287) also show moderate negative correlations, highlighting that construction activity and industrial usage shrink during economic downturns.
+### Final Model Results Summary:
 
-Market indices like the S&P 500 (-0.151) and Dow Jones Industrial Average (-0.148) are slightly negatively correlated with recessions, which aligns with the general decline in equity markets during economic contractions. Similarly, GDP (-0.118) and nonfarm payroll (-0.117) show weak negative correlations, reflecting reduced output and employment during recessions.
+| model                  | best_threshold_tuned_on_train | f1_score_on_test_with_tuned_threshold | train_accuracy | test_accuracy | precision | recall | f1_score | roc_auc_score | average_precision_score |
+| :--------------------- | :---------------------------- | :------------------------------------ | :------------- | :------------ | :-------- | :----- | :------- | :------------ | :---------------------- |
+| XGBClassifier          | 0.782121                      | 0.864865                              | 0.982857       | 0.976744      | 0.941176  | 0.80   | 0.864865 | 0.946410      | 0.863192                |
+| Bagging_Classifier     | 0.772222                      | 0.842105                              | 0.971429       | 0.972093      | 0.888889  | 0.80   | 0.842105 | 0.929744      | 0.864102                |
+| VotingClassifier       | 0.801919                      | 0.829268                              | 0.985714       | 0.967442      | 0.809524  | 0.85   | 0.829268 | 0.975641      | 0.911291                |
+| RandomForestClassifier | 0.693030                      | 0.820513                              | 0.977143       | 0.967442      | 0.842105  | 0.80   | 0.820513 | 0.929615      | 0.771769                |
+| KNeighborsClassifier   | 0.722727                      | 0.782609                              | 0.985714       | 0.953488      | 0.782609  | 0.782609 | 0.782609 | 0.985714      | 0.782609                |
+| SVC                    | 0.603939                      | 0.765957                              | 0.977143       | 0.948837      | 0.666667  | 0.90   | 0.765957 | 0.961410      | 0.734703                |
+| LogisticRegression     | 0.762323                      | 0.711111                              | 0.974286       | 0.939535      | 0.640000  | 0.80   | 0.711111 | 0.939231      | 0.548671                |
 
-Overall, the analysis confirms that economic output, consumer behavior, and business activity generally decline during recessions, while unemployment and some interest rates show slight increases, consistent with typical recession dynamics.
+The models demonstrated strong predictive capabilities, particularly the **XGBoost Classifier** and the **VotingClassifier**, which consistently achieved the highest F1-scores on the unseen test set after threshold tuning. Feature importance analysis revealed that indicators such as **Real GDP Growth Rate (6-month rolling mean)**, **Nonfarm Payroll**, and **Unemployment Rate (rolling means)** were the most influential predictors, aligning with economic theory. The custom time-series cross-validation and SMOTE proved effective in building robust models capable of identifying rare recession events.
 
-The line plot of 10Y–2Y yield spread over time show periods where the yield spread fell below zero—indicated an inversion - frequently preceded or coincided with the onset of recessions. This visual alignment supports the historical reliability of yield curve inversions as an early warning signal for economic downturns.
+#### Next Steps
 
-The baseline logistic regression model with balanced class weight shows a strong fit on the training data with a high score of 0.98, but it struggles with generalizing to unseen data, as reflected in the lower test score of 0.91. This discrepancy suggests potential overfitting, where the model has learned the patterns of the training data well but fails to capture the minority class effectively on the test data. Specifically, for the target class "1.0" (recession), the model has perfect precision (1.00), indicating that when it predicts a recession, it is almost always correct. However, the recall for this class is very low (0.05), meaning the model misses most actual recession periods, leading to a high number of false negatives. This is also reflected in the low F1-score of 0.10 for the recession class, highlighting poor performance in predicting the minority class. On the other hand, the model performs well for the majority class "0.0" (no recession), with a high precision (0.91), perfect recall (1.00), and a strong F1-score (0.95). The macro average scores show the imbalance, with recall for the minority class being significantly lower, while the weighted average scores are skewed due to the dominance of the majority class. This indicates that the model is biased towards predicting no recession, leading to poor performance in identifying recession periods. 
+* **Further Feature Engineering**: Explore additional leading economic indicators or composite indices.
+* **Advanced Time Series Models**: Investigate deep learning models like LSTMs or Transformers, which are well-suited for sequence data.
+* **Ensemble Optimization**: Further refine the `VotingClassifier` by experimenting with different base estimators or ensemble weights.
+* **Real-time Monitoring**: Develop a system for continuous data ingestion and model inference to provide real-time recession probabilities.
+* **Interpretability Tools**: Enhance model interpretability using tools like SHAP or LIME to better understand individual predictions.
+* **Sensitivity Analysis**: Conduct more thorough sensitivity analyses to different parameter choices or data assumptions.
 
-The strongest predictor based on this model is consumer_sentiment_lag1, with a large negative coefficient (-1.36), indicating that a sharp decline in consumer confidence one month prior is a strong signal of an approaching recession. This is closely followed by unemployment_rate_lag2 (-1.22), suggesting that higher unemployment levels two months earlier are a strong precursor to economic contraction. Gold_price_lag3 (-1.04) and consumer_sentiment_lag2 (-1.00) also showed strong negative associations, reflecting both investor caution and sustained consumer pessimism over multiple periods. The third lag of unemployment rate (unemployment_rate_lag3, -0.94) further confirmed that deteriorating labor market conditions are robust early warnings. Interestingly, laborforce_participation_lag3 had a positive coefficient (0.76), potentially indicating temporary resilience in labor force engagement before broader economic impacts materialize. Gold_price_lag2 (-0.74), real_gdp_growth_rate_lag1 (-0.73), and capacity_utilization_lag1 (-0.71) all demonstrated negative contributions, highlighting that contraction in economic output, production efficiency, and investor flight to safety typically precede recessions. Lastly, building_permits_lag1 (-0.68) also negatively correlated with recession, underscoring the importance of a slowdown in housing activity as a leading indicator. Collectively, these variables provide comprehensive, lagged view of consumer, labor, investment, and industrial signals that meaningfully anticipate economic downturns.
-#### Next steps
-What suggestions do you have for next steps?
-To improve performance, especially in predicting recessions, techniques like resampling, adjusting class weights, or threshold tuning could be explored. Additionally, experimenting with different models or further feature engineering might help capture more nuanced patterns in the data
+#### Outline of Project
 
+* [`data_pull.py`](data_pull.py): Fetches raw economic data from the FRED API.
+* [`data_cleaning.py`](data_cleaning.py): Cleans and merges economic data with financial market data.
+* [`data_viz.py`](data_viz.py): Provides functions for data visualization (distributions, correlations, recession timelines).
+* [`growth_detection.py`](growth_detection.py): Identifies features exhibiting exponential growth.
+* [`log_transform.py`](log_transform.py): Applies log transformation to features exhibiting exponential growth.
+* [`make_stationary.py`](make_stationary.py): Ensures time series stationarity using ADF test and differencing.
+* [`baseline_model.py`](baseline_model.py): Trains and evaluates a baseline Logistic Regression model.
+* [`feature_engineering.py`](feature_engineering.py): Generates lagged values, rolling statistics, and yield spread features.
+* [`data_preparation.py`](data_preparation.py): Orchestrates data preprocessing and performs chronological train-test splits.
+* [`custom_cv.py`](custom_cv.py): Implements a custom time series cross-validation strategy.
+* [`model_training.py`](model_training.py): Contains pipelines and search spaces for various ML models and orchestrates their training and hyperparameter tuning.
+* [`preprocessor.py`](preprocessor.py): Defines the preprocessing steps for the ML pipeline.
+* [`project_config.py`](project_config.py): Stores global configuration variables like API keys, target column, random states, etc.
+* [`utils.py`](utils.py): Contains utility functions for metrics, plotting, and feature importance summarization.
 
-#### Outline of project
-
-- [Link to notebook 1]()
-- [Link to notebook 2]()
-- [Link to notebook 3]()
+- [Link to notebook]()
 
 
 ##### Contact and Further Information
+
+For any questions or further information, please contact kushalkharelsearch@gmail.com or connect on linkedin.
