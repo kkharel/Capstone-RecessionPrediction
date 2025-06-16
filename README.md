@@ -104,6 +104,7 @@ The models demonstrated strong predictive capabilities, particularly the **XGBoo
 
 - [Link to notebook](https://github.com/kkharel/Capstone-RecessionPrediction/blob/main/RecessionPrediction.ipynb)
 
+For project_config file, please provide these information: API_KEY = "FREDAPI Key", TARGET = "recession", PREDICTION_HORIZON_MONTHS = 1, MAIN_TRAIN_TEST_SPLIT_DATE = datetime(2007, 1, 1), N_ITER_SEARCH = 100, RANDOM_STATE = 42
 
 ##### Contact and Further Information
 
