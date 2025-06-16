@@ -146,6 +146,11 @@ Model knn does not have direct feature importances or coefficients.
 
 The models demonstrated strong predictive capabilities, particularly the **XGBoost Classifier** and the **VotingClassifier**, which consistently achieved the highest F1-scores on the unseen test set after threshold tuning. Feature importance analysis revealed that indicators such as **Real GDP Growth Rate (6-month rolling mean)**, **Nonfarm Payroll**, and **Unemployment Rate (rolling means)** were the most influential predictors, aligning with economic theory. The custom time-series cross-validation and SMOTE proved effective in building robust models capable of identifying rare recession events.
 
+### Model Limitations:
+The models for Bagging, SVC, and KNN do not provide direct feature importances, limiting interpretability for these specific models.
+The effectiveness of the models is heavily reliant on the quality and availability of economic data, and real-time data might differ from historical values used for training.
+While the F1-score is high, the rare nature of recessions means that even a small number of false positives or false negatives can have significant implications.
+
 #### Next Steps
 
 * **Further Feature Engineering**: Explore additional leading economic indicators or composite indices.
