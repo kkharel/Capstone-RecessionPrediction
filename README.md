@@ -143,6 +143,7 @@ Model knn does not have direct feature importances or coefficients.
 | num__nonfarm_payroll_roll_mean3       | 0.016793   |
 | num__civilian_labor_force_lag3        | 0.016292   |
 | num__housing_start_roll_mean3         | 0.015614   |
+
 The models demonstrated strong predictive capabilities, particularly the **XGBoost Classifier** and the **VotingClassifier**, which consistently achieved the highest F1-scores on the unseen test set after threshold tuning. Feature importance analysis revealed that indicators such as **Real GDP Growth Rate (6-month rolling mean)**, **Nonfarm Payroll**, and **Unemployment Rate (rolling means)** were the most influential predictors, aligning with economic theory. The custom time-series cross-validation and SMOTE proved effective in building robust models capable of identifying rare recession events.
 
 #### Next Steps
