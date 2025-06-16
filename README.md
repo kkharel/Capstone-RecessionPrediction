@@ -102,7 +102,7 @@ The models demonstrated strong predictive capabilities, particularly the **XGBoo
 * [`project_config.py`](project_config.py): Stores global configuration variables like API keys, target column, random states, etc.
 * [`utils.py`](utils.py): Contains utility functions for metrics, plotting, and feature importance summarization.
 
-- [Link to notebook]()
+- [Link to notebook](https://github.com/kkharel/Capstone-RecessionPrediction/blob/main/RecessionPrediction.ipynb)
 
 
 ##### Contact and Further Information
