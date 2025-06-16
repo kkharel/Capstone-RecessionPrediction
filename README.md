@@ -108,4 +108,4 @@ For project_config file, please provide these information: API_KEY = "FREDAPI Ke
 
 ##### Contact and Further Information
 
-For any questions or further information, please contact kushalkharelsearch@gmail.com or connect on linkedin.
+For any questions or further information, please contact kushalkharelsearch@gmail.com or connect on [linkedin](https://www.linkedin.com/in/kushalkharel/).
