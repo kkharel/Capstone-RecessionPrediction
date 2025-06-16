@@ -73,7 +73,76 @@ The methodology encompasses a multi-stage pipeline designed specifically for tim
 | KNeighborsClassifier   | 0.722727                      | 0.782609                              | 0.985714       | 0.953488      | 0.782609  | 0.782609 | 0.782609 | 0.985714      | 0.782609                |
 | SVC                    | 0.603939                      | 0.765957                              | 0.977143       | 0.948837      | 0.666667  | 0.90   | 0.765957 | 0.961410      | 0.734703                |
 | LogisticRegression     | 0.762323                      | 0.711111                              | 0.974286       | 0.939535      | 0.640000  | 0.80   | 0.711111 | 0.939231      | 0.548671                |
+### Individual Model Feature Importances/Coefficients
 
+**Model: XGBoost**
+
+| Feature                               | Importance |
+| :------------------------------------ | :--------- |
+| num__unemployment_rate_roll_mean6     | 0.057238   |
+| num__DJI_price_roll_std3              | 0.051313   |
+| num__civilian_labor_force_lag3        | 0.046314   |
+| num__real_GDP_growth_rate_roll_mean6  | 0.038573   |
+| num__nonfarm_payroll_roll_mean3       | 0.038207   |
+| num__nonfarm_payroll                  | 0.037969   |
+| num__housing_start_roll_mean3         | 0.036161   |
+| num__housing_start_roll_mean6         | 0.032183   |
+| num__real_GDP_growth_rate_lag3        | 0.032083   |
+| num__nonfarm_payroll_roll_mean6       | 0.029872   |
+
+**Model: RandomForest**
+
+| Feature                             | Importance |
+| :---------------------------------- | :--------- |
+| num__real_GDP_growth_rate_roll_mean6 | 0.420222   |
+| num__nonfarm_payroll                | 0.352276   |
+| num__nonfarm_payroll_roll_mean6     | 0.070270   |
+| num__DJI_price_roll_mean6           | 0.018286   |
+| num__unemployment_rate_roll_mean3   | 0.017429   |
+| num__SP500_price_roll_mean6         | 0.016505   |
+| num__housing_start                  | 0.015089   |
+| num__housing_start_roll_mean6       | 0.014025   |
+| num__yield_spread_10Y_2Y_roll_std6  | 0.012323   |
+| num__10Y_treasury_yield_roll_std6   | 0.012124   |
+
+**Model: Bagging Classifier**
+Model bag does not have direct feature importances or coefficients.
+
+**Model: SVC**
+Model svc does not have direct feature importances or coefficients.
+
+**Model: K-Neighbors Classifier**
+Model knn does not have direct feature importances or coefficients.
+
+**Model: Logistic Regression (Absolute Coefficients - Top 10)**
+
+| Feature                               | Coefficient |
+| :------------------------------------ | :---------- |
+| num__nonfarm_payroll                  | 0.036610    |
+| num__real_GDP_growth_rate             | 0.029958    |
+| num__unemployment_rate_roll_mean3     | 0.028566    |
+| num__SP500_price_roll_mean6           | 0.028193    |
+| num__housing_start                    | 0.027749    |
+| num__unemployment_rate                | 0.027481    |
+| num__consumer_sentiment_roll_mean6    | 0.027446    |
+| num__nonfarm_payroll_roll_mean3       | 0.026956    |
+| num__industrial_production            | 0.026115    |
+| num__real_GDP_growth_rate_roll_mean6  | 0.025924    |
+
+### Aggregated Feature Importance Across Models (Mean of Normalized Scores)
+
+| Feature                               | Importance |
+| :------------------------------------ | :--------- |
+| num__real_GDP_growth_rate_roll_mean6  | 0.156834   |
+| num__nonfarm_payroll                  | 0.135592   |
+| num__nonfarm_payroll_roll_mean6       | 0.036652   |
+| num__unemployment_rate_roll_mean6     | 0.022702   |
+| num__housing_start_roll_mean6         | 0.018556   |
+| num__unemployment_rate_roll_mean3     | 0.018316   |
+| num__DJI_price_roll_std3              | 0.017829   |
+| num__nonfarm_payroll_roll_mean3       | 0.016793   |
+| num__civilian_labor_force_lag3        | 0.016292   |
+| num__housing_start_roll_mean3         | 0.015614   |
 The models demonstrated strong predictive capabilities, particularly the **XGBoost Classifier** and the **VotingClassifier**, which consistently achieved the highest F1-scores on the unseen test set after threshold tuning. Feature importance analysis revealed that indicators such as **Real GDP Growth Rate (6-month rolling mean)**, **Nonfarm Payroll**, and **Unemployment Rate (rolling means)** were the most influential predictors, aligning with economic theory. The custom time-series cross-validation and SMOTE proved effective in building robust models capable of identifying rare recession events.
 
 #### Next Steps
@@ -82,7 +151,6 @@ The models demonstrated strong predictive capabilities, particularly the **XGBoo
 * **Advanced Time Series Models**: Investigate deep learning models like LSTMs or Transformers, which are well-suited for sequence data.
 * **Ensemble Optimization**: Further refine the `VotingClassifier` by experimenting with different base estimators or ensemble weights.
 * **Real-time Monitoring**: Develop a system for continuous data ingestion and model inference to provide real-time recession probabilities.
-* **Interpretability Tools**: Enhance model interpretability using tools like SHAP or LIME to better understand individual predictions.
 * **Sensitivity Analysis**: Conduct more thorough sensitivity analyses to different parameter choices or data assumptions.
 
 #### Outline of Project
