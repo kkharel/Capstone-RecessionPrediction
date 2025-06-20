@@ -14,7 +14,7 @@ DJI_PATH = st.secrets.get("DJI_PATH")
 START_DATE = st.secrets.get("START_DATE", "2020-10-01")
 END_DATE = st.secrets.get("END_DATE", "2025-03-31")
 
-BEST_THRESHOLD = float(st.secrets.get("BEST_THRESHOLD))
+BEST_THRESHOLD = float(st.secrets.get("BEST_THRESHOLD"))
 PREDICTION_HORIZON_MONTHS = int(st.secrets.get("PREDICTION_HORIZON_MONTHS"))
 
 st.set_page_config(page_title="Recession Predictor", layout="centered")
