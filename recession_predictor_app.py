@@ -48,9 +48,9 @@ def prepare_data():
 
     cleaned_df = data_cleaning.clean_economic_data(
         economic_data=raw_df,
-        gold_data=gold_df,       # Pass DataFrame directly instead of path
-        sp500_data=sp500_df,
-        dji_data=dji_df,
+        gold_data_path=gold_df,       
+        sp500_data_path=sp500_df,
+        dji_data_path=dji_df,
         output_path=None,
         start_date=START_DATE,
         end_date=END_DATE
