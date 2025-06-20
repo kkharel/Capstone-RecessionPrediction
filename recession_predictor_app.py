@@ -32,25 +32,16 @@ def load_model(path):
         st.error(f"Error loading model: {e}")
         return None
 
-@st.cache_data
-def load_external_data():
-    # Load CSVs from GitHub URLs directly
-    gold_df = pd.read_csv(GOLD_URL)
-    sp500_df = pd.read_csv(SP500_URL)
-    dji_df = pd.read_csv(DJI_URL)
-    return gold_df, sp500_df, dji_df
 
 @st.cache_data
 def prepare_data():
     raw_df = data_pull.pull_economic_data(output_path=None)
 
-    gold_df, sp500_df, dji_df = load_external_data()
-
     cleaned_df = data_cleaning.clean_economic_data(
         economic_data=raw_df,
-        gold_data_path=gold_df,       
-        sp500_data_path=sp500_df,
-        dji_data_path=dji_df,
+        gold_data_path=GOLD_URL,       
+        sp500_data_path=SP500_URL,
+        dji_data_path=DJI_URL,
         output_path=None,
         start_date=START_DATE,
         end_date=END_DATE
