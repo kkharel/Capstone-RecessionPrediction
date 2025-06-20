@@ -5,7 +5,18 @@ import argparse
 import os
 from sklearn.base import BaseEstimator, TransformerMixin
 import logging
-from project_config import PREDICTION_HORIZON_MONTHS
+# from project_config import PREDICTION_HORIZON_MONTHS
+
+import streamlit as st
+from datetime import datetime
+
+# Load secrets
+API_KEY = st.secrets["API_KEY"]
+TARGET = st.secrets["TARGET"]
+PREDICTION_HORIZON_MONTHS = int(st.secrets["PREDICTION_HORIZON_MONTHS"])
+MAIN_TRAIN_TEST_SPLIT_DATE = datetime.strptime(st.secrets["MAIN_TRAIN_TEST_SPLIT_DATE"], "%Y-%m-%d")
+N_ITER_SEARCH = int(st.secrets["N_ITER_SEARCH"])
+RANDOM_STATE = int(st.secrets["RANDOM_STATE"])
 
 logging.basicConfig(level = logging.INFO, format = '%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
