@@ -1,6 +1,0 @@
-Model,Accuracy,Precision,Recall,F1-Score,ROC AUC,Optimal Threshold
-LogisticRegression,0.9408,0.1818,1.0,0.3077,0.985,0.9945
-RandomForestClassifier,0.9868,0.5,1.0,0.6667,1.0,0.7186
-XGBClassifier,0.9868,0.5,1.0,0.6667,0.9967,0.8788
-SVC,0.4605,0.0122,0.5,0.0238,0.5267,0.3066
-KNeighborsClassifier,0.9671,0.2,0.5,0.2857,0.7233,1.0

@@ -33,47 +33,73 @@ def initialize_models(preprocessor):
         'LogisticRegression': {
             'pipeline': ImbPipeline(steps = [
                 ('preprocessor', preprocessor),
-                ('smote', SMOTE(random_state = RANDOM_STATE)), 
-                ('classifier', LogisticRegression(random_state = RANDOM_STATE))
+                ('smote', SMOTE(random_state=RANDOM_STATE)),  # or ADASYN, SMOTETomek
+                ('classifier', LogisticRegression(
+                    random_state=RANDOM_STATE,
+                    class_weight='balanced',
+                    warm_start=True,
+                    solver='saga'
+                ))
             ]),
             'search_spaces': {
-                'classifier__penalty': Categorical(['l1', 'l2']), 
-                'classifier__C': Real(0.001, 10.0, prior = 'log-uniform'),
-                'classifier__solver': Categorical(['liblinear', 'saga']), # 'liblinear' for small datasets, 'saga' for larger
-                'classifier__max_iter': Integer(100, 100000), # max_iter for convergence
-                'classifier__n_jobs': Categorical([-1, 1]), # Parallel jobs, -1 for all available cores
-                'smote__k_neighbors': Integer(3, 5), # small value due to limited data
-                'smote__sampling_strategy': Real(0.25, 0.7, prior='uniform') # Using Real for continuous sampling strategy
+                'classifier__penalty': Categorical(['l1']),
+                'classifier__C': Real(0.01, 5.0, prior='log-uniform'),
+                'classifier__tol': Real(1e-4, 1e-3, prior='log-uniform'),
+                'classifier__max_iter': Integer(5000, 20000),
+                'classifier__n_jobs': Categorical([-1]),
+                'smote__k_neighbors': Integer(1, 5),
+                'smote__sampling_strategy': Categorical(['auto', 0.5, 0.75])
             }
         },
 
         'RandomForestClassifier': {
-            'pipeline': ImbPipeline(steps = [
+            'pipeline': ImbPipeline(steps=[
                 ('preprocessor', preprocessor),
-                ('smote', SMOTE(random_state = RANDOM_STATE)), 
-                # ('feature_selection', RFE(
-                #     estimator = RandomForestClassifier(random_state = 42, class_weight = 'balanced', n_jobs = -1),
-                #     n_features_to_select = 20, # The number of features to select (tuning this below)
-                #     step = 1 # The number of features to remove at each iteration
-                # )), 
-                ('classifier', RandomForestClassifier(random_state = RANDOM_STATE, class_weight = 'balanced', n_jobs = -1))
+                ('smote', SMOTE(random_state=RANDOM_STATE)),
+                ('feature_selection', SelectFromModel(
+                    estimator=RandomForestClassifier(
+                        random_state=RANDOM_STATE,
+                        class_weight='balanced',
+                        n_jobs=-1,
+                        n_estimators=100, 
+                        max_depth=10 
+                    ),
+                    prefit=False,
+                )),
+                ('classifier', RandomForestClassifier(random_state=RANDOM_STATE, class_weight='balanced', n_jobs=-1))
             ]),
             'search_spaces': {
-                'classifier__n_estimators': Integer(10, 200),
-                'classifier__max_depth': Integer(5, 30),
-                'classifier__min_samples_leaf': Integer(5, 20),
-                'classifier__min_samples_split': Integer(2, 10),
-                'classifier__max_features': Categorical(['sqrt', 'log2', 0.6, 0.8, 0.9]),
-                'smote__k_neighbors': Integer(3, 5),
-                'smote__sampling_strategy': Categorical([0.25, 0.5, 0.75, 'auto'])
-                # 'feature_selection__n_features_to_select': Integer(10, 250), # searching to tune n_features_to_select for RFE
+                # Classifier Hyperparameters
+                'classifier__n_estimators': Integer(250, 700),
+                'classifier__max_depth': Integer(15, 25),
+                'classifier__min_samples_leaf': Integer(25, 60), 
+                'classifier__min_samples_split': Integer(20, 40), 
+                'classifier__max_features': Categorical(['sqrt', 'log2', 0.4, 0.5, 0.6]),
+                'classifier__ccp_alpha': Real(0.005, 0.05, prior='log-uniform'),
+
+                # SMOTE Hyperparameters 
+                'smote__k_neighbors': Integer(3, 7), 
+                'smote__sampling_strategy': Categorical([0.25, 0.5, 0.75]), 
+
+                # Feature Selection (SelectFromModel) Hyperparameters
+                'feature_selection__max_features': Integer(10, 35), 
             }
         },
 
-        'Bagging_Classifier': { 
+        'Bagging_Classifier': {
             'pipeline': ImbPipeline(steps = [
                 ('preprocessor', preprocessor),
                 ('smote', SMOTE(random_state = RANDOM_STATE)),
+                ('feature_selection', SelectFromModel(
+                    estimator=RandomForestClassifier(
+                        random_state=RANDOM_STATE,
+                        class_weight='balanced',
+                        n_jobs=-1,
+                        n_estimators=100,
+                        max_depth=10
+                    ),
+                    prefit=False,
+                )),
                 ('classifier', BaggingClassifier(
                     estimator = DecisionTreeClassifier(class_weight = 'balanced', random_state = RANDOM_STATE),
                     n_jobs = -1,
@@ -82,20 +108,25 @@ def initialize_models(preprocessor):
             ]),
             
             'search_spaces': {
-                'classifier__n_estimators': Integer(100, 200),
-                'classifier__bootstrap': Categorical([True]),
+                'classifier__n_estimators': Integer(200, 350), 
+                'classifier__bootstrap': Categorical([False]),
+                'classifier__max_samples': Real(0.4, 0.7, prior='uniform'),
 
-                # Decision tree base estimator hyperparams
-                'classifier__estimator__max_depth': Integer(2, 5), 
-                'classifier__estimator__min_samples_leaf': Integer(30, 60),
-                'classifier__estimator__min_samples_split': Integer(60, 120),
-                'classifier__estimator__max_features': Categorical([0.6, 'sqrt', 'log2']), 
-                
+                # Decision tree base estimator hyperparameters 
+                'classifier__estimator__max_depth': Integer(3, 8), 
+                'classifier__estimator__min_samples_leaf': Integer(80, 150),
+                'classifier__estimator__min_samples_split': Integer(160, 300),
+                'classifier__estimator__max_features': Categorical(['sqrt', 0.3]), 
+
                 # SMOTE tuning
                 'smote__k_neighbors': Integer(3, 5),
-                'smote__sampling_strategy': Real(0.5, 0.8, prior='uniform')
+                'smote__sampling_strategy': Real(0.8, 1.0, prior='uniform'), 
+
+                # Feature Selection (SelectFromModel) Hyperparameters
+                'feature_selection__max_features': Integer(8, 12), 
             }
         },
+
 
         'XGBClassifier': {
             'pipeline': ImbPipeline(steps = [
@@ -103,15 +134,18 @@ def initialize_models(preprocessor):
                 ('classifier', XGBClassifier(random_state = RANDOM_STATE, use_label_encoder = False, eval_metric = 'logloss', n_jobs = -1))
             ]),
             'search_spaces': {
-                'classifier__n_estimators': Integer(100, 500), 
-                'classifier__learning_rate': Real(0.01, 0.4, prior = 'log-uniform'),
-                'classifier__max_depth': Integer(3, 11), 
-                'classifier__subsample': Real(0.25, 1.0, prior = 'uniform'),
-                'classifier__colsample_bytree': Real(0.5, 1.0, prior = 'uniform'),
-                'classifier__gamma': Real(0.0, 0.2, prior = 'uniform'),
-                'classifier__scale_pos_weight': Real(1.0, 80.0, prior = 'log-uniform') 
+                'classifier__n_estimators': Integer(2000, 4000),
+                'classifier__learning_rate': Real(0.001, 0.005, prior = 'log-uniform'),
+                
+                'classifier__max_depth': Integer(2, 3), # extremely shallow trees
+                'classifier__min_child_weight': Real(5.0, 20.0, prior = 'log-uniform'),
+                'classifier__subsample': Real(0.7, 0.9), 
+                'classifier__colsample_bytree': Real(0.7, 0.9), 
+                'classifier__gamma': Real(0.1, 0.5, prior = 'uniform'), 
+                'classifier__scale_pos_weight': Real(100.0, 300.0, prior = 'uniform') # high to push for recall
             }
         },
+
 
         'SVC': {
             'pipeline': ImbPipeline(steps = [
@@ -129,21 +163,8 @@ def initialize_models(preprocessor):
             }
         },
 
-        'KNeighborsClassifier': {
-            'pipeline': ImbPipeline(steps = [
-                ('preprocessor', preprocessor),
-                ('smote', SMOTE(random_state = RANDOM_STATE)),
-                ('classifier', KNeighborsClassifier())
-            ]),
-            'search_spaces': {
-                'classifier__n_neighbors': Integer(6, 8), 
-                'classifier__weights': Categorical(['uniform']), 
-                'classifier__p': Categorical([1, 2]),
-                'smote__k_neighbors': Integer(3, 4),
-                'smote__sampling_strategy': Real(0.4, 0.55, prior = 'uniform') 
-            }
-        }
     }
+
     return models
 
 
