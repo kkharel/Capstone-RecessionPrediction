@@ -56,7 +56,6 @@ The methodology encompasses a multi-stage pipeline designed specifically for tim
         * Bagging Classifier (with Decision Tree as base estimator)
         * XGBoost Classifier
         * Support Vector Classifier (SVC)
-        * K-Nearest Neighbors Classifier
         * Voting Classifier
     * Models are evaluated using F1-score (tuned with a custom threshold) as the primary metric, alongside precision, recall, accuracy, ROC AUC, and Average Precision.
 
@@ -64,90 +63,101 @@ The methodology encompasses a multi-stage pipeline designed specifically for tim
 
 ### Final Model Results Summary:
 
-| model                  | best_threshold_tuned_on_train | f1_score_on_test_with_tuned_threshold | train_accuracy | test_accuracy | precision | recall | f1_score | roc_auc_score | average_precision_score |
-| :--------------------- | :---------------------------- | :------------------------------------ | :------------- | :------------ | :-------- | :----- | :------- | :------------ | :---------------------- |
-| XGBClassifier          | 0.782121                      | 0.864865                              | 0.982857       | 0.976744      | 0.941176  | 0.80   | 0.864865 | 0.946410      | 0.863192                |
-| Bagging_Classifier     | 0.772222                      | 0.842105                              | 0.971429       | 0.972093      | 0.888889  | 0.80   | 0.842105 | 0.929744      | 0.864102                |
-| VotingClassifier       | 0.801919                      | 0.829268                              | 0.985714       | 0.967442      | 0.809524  | 0.85   | 0.829268 | 0.975641      | 0.911291                |
-| RandomForestClassifier | 0.693030                      | 0.820513                              | 0.977143       | 0.967442      | 0.842105  | 0.80   | 0.820513 | 0.929615      | 0.771769                |
-| KNeighborsClassifier   | 0.722727                      | 0.782609                              | 0.985714       | 0.953488      | 0.782609  | 0.782609 | 0.782609 | 0.985714      | 0.782609                |
-| SVC                    | 0.603939                      | 0.765957                              | 0.977143       | 0.948837      | 0.666667  | 0.90   | 0.765957 | 0.961410      | 0.734703                |
-| LogisticRegression     | 0.762323                      | 0.711111                              | 0.974286       | 0.939535      | 0.640000  | 0.80   | 0.711111 | 0.939231      | 0.548671                |
-### Individual Model Feature Importances/Coefficients
+| Model                  | Best Threshold (Train) | F1 Score (Test, Tuned Threshold) | Train Accuracy | Test Accuracy | Precision | Recall | F1 Score | ROC AUC Score | Average Precision Score |
+|:-----------------------|-----------------------:|---------------------------------:|---------------:|--------------:|----------:|-------:|---------:|--------------:|------------------------:|
+| VotingClassifier       | 0.762                  | 0.789                            | 0.9857        | 0.9515       | 0.8333   | 0.75  | 0.789    | 0.9352       | 0.8123                  |
+| Bagging_Classifier     | 0.644                  | 0.780                            | 0.94          | 0.9455       | 0.7619   | 0.80  | 0.780    | 0.9434       | 0.7460                  |
+| XGBClassifier          | 0.871                  | 0.762                            | 0.9857        | 0.9394       | 0.7273   | 0.80  | 0.762    | 0.9193       | 0.7940                  |
+| SVC                    | 0.673                  | 0.737                            | 0.9857        | 0.9394       | 0.7778   | 0.70  | 0.737    | 0.9479       | 0.8108                  |
+| RandomForestClassifier | 0.634                  | 0.732                            | 0.9457        | 0.9333       | 0.7143   | 0.75  | 0.732    | 0.9317       | 0.7857                  |
+| LogisticRegression     | 0.614                  | 0.604                            | 0.9571        | 0.8727       | 0.4848   | 0.80  | 0.604    | 0.9141       | 0.5609                  |
 
-**Model: XGBoost**
+The ensemble VotingClassifier achieved the best overall performance with a tuned threshold F1 score of 0.789 on the test set, paired with strong precision (0.83) and recall (0.75), indicating a balanced ability to correctly identify positive cases while limiting false positives. Bagging and XGBoost classifiers also performed well, with F1 scores close to 0.78 and 0.76 respectively, showing strong generalization and competitive recall values around 0.8.
 
-| Feature                               | Importance |
-| :------------------------------------ | :--------- |
-| num__unemployment_rate_roll_mean6     | 0.057238   |
-| num__DJI_price_roll_std3              | 0.051313   |
-| num__civilian_labor_force_lag3        | 0.046314   |
-| num__real_GDP_growth_rate_roll_mean6  | 0.038573   |
-| num__nonfarm_payroll_roll_mean3       | 0.038207   |
-| num__nonfarm_payroll                  | 0.037969   |
-| num__housing_start_roll_mean3         | 0.036161   |
-| num__housing_start_roll_mean6         | 0.032183   |
-| num__real_GDP_growth_rate_lag3        | 0.032083   |
-| num__nonfarm_payroll_roll_mean6       | 0.029872   |
+SVC and RandomForest classifiers followed closely, providing solid accuracy and AUC scores above 0.93, with SVC standing out with the highest ROC AUC (0.95), suggesting excellent discrimination capability. Logistic Regression lagged behind in F1 and precision despite good recall, indicating it tends to flag more positives but with lower precision.
 
-**Model: RandomForest**
+Overall, the results suggest that ensemble methods and boosted trees outperform simpler linear models in this classification task, especially when threshold tuning is applied to optimize F1 score on the test set.
 
-| Feature                             | Importance |
-| :---------------------------------- | :--------- |
-| num__real_GDP_growth_rate_roll_mean6 | 0.420222   |
-| num__nonfarm_payroll                | 0.352276   |
-| num__nonfarm_payroll_roll_mean6     | 0.070270   |
-| num__DJI_price_roll_mean6           | 0.018286   |
-| num__unemployment_rate_roll_mean3   | 0.017429   |
-| num__SP500_price_roll_mean6         | 0.016505   |
-| num__housing_start                  | 0.015089   |
-| num__housing_start_roll_mean6       | 0.014025   |
-| num__yield_spread_10Y_2Y_roll_std6  | 0.012323   |
-| num__10Y_treasury_yield_roll_std6   | 0.012124   |
 
-**Model: Bagging Classifier**
-Model bag does not have direct feature importances or coefficients.
+### Feature Importances for Each Model
+
+**Model: LogisticRegression**
+
+| Feature                                | Importance |
+| :-------------------------------------| ----------:|
+| SP500_price_roll_mean6                 | 0.522601   |
+| core_CPI_roll_mean3                    | 0.475610   |
+| core_CPI                              | 0.457520   |
+| industrial_production_roll_mean6      | 0.450118   |
+| consumer_sentiment_roll_mean6         | 0.203920   |
+| nonfarm_payroll                      | 0.202524   |
+| housing_start                        | 0.170260   |
+| real_GDP_growth_rate                 | 0.139051   |
+| nonfarm_payroll_roll_mean3            | 0.078187   |
+| median_sale_price_new_houses_roll_mean6 | 0.059299 |
+
+---
+
+**Model: RandomForestClassifier**
+
+| Feature                            | Importance |
+| :---------------------------------| ----------:|
+| nonfarm_payroll_roll_mean3         | 0.204649   |
+| real_GDP_growth_rate_roll_mean6    | 0.198685   |
+| core_CPI_roll_mean6                | 0.171489   |
+| nonfarm_payroll                   | 0.146579   |
+| industrial_production_roll_mean6  | 0.085590   |
+| CPI_roll_mean6                   | 0.056688   |
+| housing_start                   | 0.054814   |
+| SP500_price_roll_mean6           | 0.050661   |
+| nonfarm_payroll_roll_mean6        | 0.022469   |
+| 1Y_treasury_yield_roll_std6       | 0.008376   |
+
+---
+
+**Model: Bagging_Classifier**
+
+| Feature                            | Importance |
+| :---------------------------------| ----------:|
+| nonfarm_payroll_roll_mean3         | 0.276180   |
+| nonfarm_payroll                  | 0.183783   |
+| real_GDP_growth_rate_roll_mean6   | 0.173631   |
+| industrial_production_roll_mean6  | 0.095152   |
+| core_CPI_roll_mean6              | 0.083564   |
+| SP500_price_roll_mean6           | 0.067149   |
+| CPI_roll_mean6                 | 0.035630   |
+| core_CPI_roll_mean3            | 0.034292   |
+| nonfarm_payroll_roll_mean6        | 0.029871   |
+| housing_start                  | 0.020749   |
+
+---
+
+**Model: XGBClassifier**
+
+| Feature                                         | Importance |
+| :----------------------------------------------| ----------:|
+| 3Y_treasury_yield                              | 0.070186   |
+| nonfarm_payroll_roll_mean3                      | 0.049318   |
+| industrial_production_roll_mean6                | 0.031649   |
+| real_GDP_growth_rate_roll_mean6                 | 0.030209   |
+| yield_spread_10Y_2Y_lag6                        | 0.021241   |
+| nonfarm_payroll                                | 0.018815   |
+| housing_start_lag3                             | 0.013586   |
+| nonfarm_business_sector_real_output_per_hour_roll_std6 | 0.012793   |
+| industrial_production_roll_mean3                | 0.011660   |
+| median_sale_price_new_houses_lag3               | 0.011552   |
+
+---
 
 **Model: SVC**
-Model svc does not have direct feature importances or coefficients.
 
-**Model: K-Neighbors Classifier**
-Model knn does not have direct feature importances or coefficients.
+This model does not provide feature importances or coefficients.
 
-**Model: Logistic Regression (Absolute Coefficients - Top 10)**
 
-| Feature                               | Coefficient |
-| :------------------------------------ | :---------- |
-| num__nonfarm_payroll                  | 0.036610    |
-| num__real_GDP_growth_rate             | 0.029958    |
-| num__unemployment_rate_roll_mean3     | 0.028566    |
-| num__SP500_price_roll_mean6           | 0.028193    |
-| num__housing_start                    | 0.027749    |
-| num__unemployment_rate                | 0.027481    |
-| num__consumer_sentiment_roll_mean6    | 0.027446    |
-| num__nonfarm_payroll_roll_mean3       | 0.026956    |
-| num__industrial_production            | 0.026115    |
-| num__real_GDP_growth_rate_roll_mean6  | 0.025924    |
-
-### Aggregated Feature Importance Across Models (Mean of Normalized Scores)
-
-| Feature                               | Importance |
-| :------------------------------------ | :--------- |
-| num__real_GDP_growth_rate_roll_mean6  | 0.156834   |
-| num__nonfarm_payroll                  | 0.135592   |
-| num__nonfarm_payroll_roll_mean6       | 0.036652   |
-| num__unemployment_rate_roll_mean6     | 0.022702   |
-| num__housing_start_roll_mean6         | 0.018556   |
-| num__unemployment_rate_roll_mean3     | 0.018316   |
-| num__DJI_price_roll_std3              | 0.017829   |
-| num__nonfarm_payroll_roll_mean3       | 0.016793   |
-| num__civilian_labor_force_lag3        | 0.016292   |
-| num__housing_start_roll_mean3         | 0.015614   |
-
-The models demonstrated strong predictive capabilities, particularly the **XGBoost Classifier** and the **VotingClassifier**, which consistently achieved the highest F1-scores on the unseen test set after threshold tuning. Feature importance analysis revealed that indicators such as **Real GDP Growth Rate (6-month rolling mean)**, **Nonfarm Payroll**, and **Unemployment Rate (rolling means)** were the most influential predictors, aligning with economic theory. The custom time-series cross-validation and SMOTE proved effective in building robust models capable of identifying rare recession events.
+The results above show a consistent importance of labor market indicators such as nonfarm payrolls and economic measures like GDP growth and core CPI across different models. The Logistic Regression highlights market price and inflation indicators as strongly predictive, while tree-based models also emphasize payroll and production metrics. Notably, SVC does not provide feature importances, reflecting the model's nature
 
 ### Model Limitations:
-The models for Bagging, SVC, and KNN do not provide direct feature importances, limiting interpretability for these specific models.
+The models for SVC do not provide direct feature importances, limiting interpretability for these specific models.
 The effectiveness of the models is heavily reliant on the quality and availability of economic data, and real-time data might differ from historical values used for training.
 While the F1-score is high, the rare nature of recessions means that even a small number of false positives or false negatives can have significant implications.
 
@@ -155,10 +165,9 @@ While the F1-score is high, the rare nature of recessions means that even a smal
 
 * **Further Feature Engineering**: Explore additional leading economic indicators or composite indices.
 * **Advanced Time Series Models**: Investigate deep learning models like LSTMs or Transformers, which are well-suited for sequence data.
-* **Ensemble Optimization**: Further refine the `VotingClassifier` by experimenting with different base estimators or ensemble weights.
 * **Real-time Monitoring**: Develop a system for continuous data ingestion and model inference to provide real-time recession probabilities.
 * **Sensitivity Analysis**: Conduct more thorough sensitivity analyses to different parameter choices or data assumptions.
-
+* **User-Selected Forecast**: Horizon: Add interactive date pickers to allow users to select custom start and end dates for the input data, as well as adjust the forecast horizon dynamically. This will enable tailored recession predictions for specific future periods and improve the app’s flexibility and usability.
 #### Outline of Project
 
 * [`data_pull.py`](data_pull.py): Fetches raw economic data from the FRED API.
@@ -175,9 +184,11 @@ While the F1-score is high, the rare nature of recessions means that even a smal
 * [`preprocessor.py`](preprocessor.py): Defines the preprocessing steps for the ML pipeline.
 * [`project_config.py`](project_config.py): Stores global configuration variables like API keys, target column, random states, etc.
 * [`utils.py`](utils.py): Contains utility functions for metrics, plotting, and feature importance summarization.
-
+* [`recession_predictor_app.py`](recession_predictor_app.py): Contains minimal viable product application.
+* 
 - [Link to notebook](https://github.com/kkharel/Capstone-RecessionPrediction/blob/main/RecessionPrediction.ipynb)
-
+- [Link to App](https://capstone-recessionprediction-j3jew7zh5gknh9r8vk73s5.streamlit.app/)
+  
 For project_config file, please provide these information: API_KEY = "FREDAPI Key", TARGET = "recession", PREDICTION_HORIZON_MONTHS = 1, MAIN_TRAIN_TEST_SPLIT_DATE = datetime(2007, 1, 1), N_ITER_SEARCH = 100, RANDOM_STATE = 42
 
 ##### Contact and Further Information
