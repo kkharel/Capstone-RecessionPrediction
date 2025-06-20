@@ -2,18 +2,19 @@ import streamlit as st
 import pandas as pd
 import joblib
 from datetime import datetime
-import data_pull, data_cleaning, growth_detection, log_transform, make_stationary
-from feature_engineering import FeatureEngineer
 import tempfile
 import requests
+
+import data_pull, data_cleaning, growth_detection, log_transform, make_stationary
+from feature_engineering import FeatureEngineer
 
 # --- CONFIG ---
 MODEL_PATH = st.secrets.get("MODEL_PATH", "models/Bagging_Classifier_best_pipeline.pkl")
 
-# Set your raw GitHub URLs here or in your secrets file
-GOLD_URL = st.secrets.get("GOLD_URL", "https://raw.githubusercontent.com/kkharel/Capstone-RecessionPrediction/refs/heads/main/data/gold.csv")
-SP500_URL = st.secrets.get("SP500_URL", "https://raw.githubusercontent.com/kkharel/Capstone-RecessionPrediction/refs/heads/main/data/SP500.csv")
-DJI_URL = st.secrets.get("DJI_URL", "https://raw.githubusercontent.com/kkharel/Capstone-RecessionPrediction/refs/heads/main/data/DJI.csv")
+# GitHub raw URLs
+GOLD_URL = st.secrets.get("GOLD_URL", "https://raw.githubusercontent.com/kkharel/Capstone-RecessionPrediction/main/data/gold.csv")
+SP500_URL = st.secrets.get("SP500_URL", "https://raw.githubusercontent.com/kkharel/Capstone-RecessionPrediction/main/data/SP500.csv")
+DJI_URL = st.secrets.get("DJI_URL", "https://raw.githubusercontent.com/kkharel/Capstone-RecessionPrediction/main/data/DJI.csv")
 
 START_DATE = st.secrets.get("START_DATE", "2020-10-01")
 END_DATE = st.secrets.get("END_DATE", "2025-03-31")
@@ -21,10 +22,12 @@ END_DATE = st.secrets.get("END_DATE", "2025-03-31")
 BEST_THRESHOLD = float(st.secrets.get("BEST_THRESHOLD", 0.643535))
 PREDICTION_HORIZON_MONTHS = int(st.secrets.get("PREDICTION_HORIZON_MONTHS", 3))
 
+# --- STREAMLIT UI ---
 st.set_page_config(page_title="Recession Predictor", layout="centered")
 st.title("📉 Recession Forecasting App")
 st.markdown("This app predicts upcoming recessions based on macroeconomic indicators.")
 
+# --- Load Model ---
 @st.cache_resource
 def load_model(path):
     try:
@@ -33,7 +36,8 @@ def load_model(path):
     except Exception as e:
         st.error(f"Error loading model: {e}")
         return None
-        
+
+# --- Download CSVs from GitHub to Temp Files ---
 @st.cache_data
 def download_and_save_temp_csv(url):
     response = requests.get(url)
@@ -45,6 +49,7 @@ def download_and_save_temp_csv(url):
     tmp.close()
     return tmp.name
 
+# --- Prepare Data ---
 @st.cache_data
 def prepare_data():
     raw_df = data_pull.pull_economic_data(output_path=None)
@@ -63,6 +68,8 @@ def prepare_data():
         end_date=END_DATE
     )
     return cleaned_df
+
+# --- Predict Function ---
 def predict_recession(cleaned_df, model):
     growth_flags = growth_detection.detect_exponential_growth_in_df(cleaned_df, time_col='date', verbose=False)
     df_transformed = log_transform.apply_log_transform(cleaned_df, growth_flags)
@@ -90,26 +97,26 @@ def predict_recession(cleaned_df, model):
         })
     return pd.DataFrame(results)
 
-# MAIN FLOW
+# --- MAIN EXECUTION ---
 model = load_model(MODEL_PATH)
 if model:
     st.success("Model loaded successfully!")
     st.info("Generating predictions...")
+
     try:
         cleaned_df = prepare_data()
         results_df = predict_recession(cleaned_df, model)
         st.dataframe(results_df, use_container_width=True)
 
         if (results_df['Prediction'] == "RECESSION").any():
-            st.warning("Recession likely in some upcoming periods!")
+            st.warning("⚠️ Recession likely in some upcoming periods!")
         else:
-            st.success("No recession forecasted in the upcoming periods.")
+            st.success("✅ No recession forecasted in the upcoming periods.")
 
         csv = results_df.to_csv(index=False).encode("utf-8")
         st.download_button("📥 Download Predictions as CSV", csv, "recession_predictions.csv", "text/csv")
 
     except Exception as e:
         st.error(f"Prediction failed: {e}")
-
 else:
-    st.error("Failed to load model. Please check the model path and try again.")
+    st.error("❌ Failed to load model. Please check the model path and try again.")
