@@ -6,16 +6,18 @@ import data_pull, data_cleaning, growth_detection, log_transform, make_stationar
 from feature_engineering import FeatureEngineer
 
 # --- CONFIG ---
-MODEL_PATH = st.secrets.get("MODEL_PATH")
-GOLD_PATH = st.secrets.get("GOLD_PATH")
-SP500_PATH = st.secrets.get("SP500_PATH")
-DJI_PATH = st.secrets.get("DJI_PATH")
+MODEL_PATH = st.secrets.get("MODEL_PATH", "models/Bagging_Classifier_best_pipeline.pkl")
+
+# Set your raw GitHub URLs here or in your secrets file
+GOLD_URL = st.secrets.get("GOLD_URL", "https://raw.githubusercontent.com/kkharel/Capstone-RecessionPrediction/main/data/gold.csv")
+SP500_URL = st.secrets.get("SP500_URL", "https://raw.githubusercontent.com/kkharel/Capstone-RecessionPrediction/main/data/sp500.csv")
+DJI_URL = st.secrets.get("DJI_URL", "https://raw.githubusercontent.com/kkharel/Capstone-RecessionPrediction/main/data/dji.csv")
 
 START_DATE = st.secrets.get("START_DATE", "2020-10-01")
 END_DATE = st.secrets.get("END_DATE", "2025-03-31")
 
-BEST_THRESHOLD = float(st.secrets.get("BEST_THRESHOLD"))
-PREDICTION_HORIZON_MONTHS = int(st.secrets.get("PREDICTION_HORIZON_MONTHS"))
+BEST_THRESHOLD = float(st.secrets.get("BEST_THRESHOLD", 0.643535))
+PREDICTION_HORIZON_MONTHS = int(st.secrets.get("PREDICTION_HORIZON_MONTHS", 3))
 
 st.set_page_config(page_title="Recession Predictor", layout="centered")
 st.title("📉 Recession Forecasting App")
@@ -31,13 +33,24 @@ def load_model(path):
         return None
 
 @st.cache_data
+def load_external_data():
+    # Load CSVs from GitHub URLs directly
+    gold_df = pd.read_csv(GOLD_URL)
+    sp500_df = pd.read_csv(SP500_URL)
+    dji_df = pd.read_csv(DJI_URL)
+    return gold_df, sp500_df, dji_df
+
+@st.cache_data
 def prepare_data():
     raw_df = data_pull.pull_economic_data(output_path=None)
+
+    gold_df, sp500_df, dji_df = load_external_data()
+
     cleaned_df = data_cleaning.clean_economic_data(
         economic_data=raw_df,
-        gold_data_path=GOLD_PATH,
-        sp500_data_path=SP500_PATH,
-        dji_data_path=DJI_PATH,
+        gold_data=gold_df,       # Pass DataFrame directly instead of path
+        sp500_data=sp500_df,
+        dji_data=dji_df,
         output_path=None,
         start_date=START_DATE,
         end_date=END_DATE
@@ -52,9 +65,9 @@ def predict_recession(cleaned_df, model):
 
     fe = FeatureEngineer(
         target_col="recession",
-        prediction_horizon_months=3, # should match training setup
-        lag_periods=[3, 6], # should match training setup
-        rolling_windows=[3, 6] # should match training setup
+        prediction_horizon_months=PREDICTION_HORIZON_MONTHS,
+        lag_periods=[3, 6],
+        rolling_windows=[3, 6]
     )
     X_transformed = fe.fit_transform(stationary_df.copy())
     probabilities = model.predict_proba(X_transformed)[:, 1]
@@ -62,7 +75,7 @@ def predict_recession(cleaned_df, model):
 
     results = []
     for i, date in enumerate(X_transformed.index):
-        pred_date = date + pd.DateOffset(months=3)
+        pred_date = date + pd.DateOffset(months=PREDICTION_HORIZON_MONTHS)
         results.append({
             "From": date.strftime("%Y-%m"),
             "To": pred_date.strftime("%Y-%m"),
@@ -91,3 +104,6 @@ if model:
 
     except Exception as e:
         st.error(f"Prediction failed: {e}")
+
+else:
+    st.error("Failed to load model. Please check the model path and try again.")
