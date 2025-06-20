@@ -10,6 +10,8 @@ MODEL_PATH = st.secrets.get("MODEL_PATH")
 GOLD_PATH = st.secrets.get("GOLD_PATH")
 SP500_PATH = st.secrets.get("SP500_PATH")
 DJI_PATH = st.secrets.get("DJI_PATH")
+START_DATE = st.secrets.get("START_DATE", "2020-10-01")
+END_DATE = st.secrets.get("END_DATE", "2025-03-31")
 
 st.set_page_config(page_title="Recession Predictor", layout="centered")
 st.title("📉 Recession Forecasting App")
