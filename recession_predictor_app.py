@@ -6,16 +6,16 @@ import data_pull, data_cleaning, growth_detection, log_transform, make_stationar
 from feature_engineering import FeatureEngineer
 
 # --- CONFIG ---
-MODEL_PATH = st.secrets.get("MODEL_PATH", "models/Bagging_Classifier_best_pipeline.pkl")
-GOLD_PATH = st.secrets.get("GOLD_PATH", "data/gold.csv")
-SP500_PATH = st.secrets.get("SP500_PATH", "data/sp500.csv")
-DJI_PATH = st.secrets.get("DJI_PATH", "data/dji.csv")
+MODEL_PATH = st.secrets.get("MODEL_PATH")
+GOLD_PATH = st.secrets.get("GOLD_PATH")
+SP500_PATH = st.secrets.get("SP500_PATH")
+DJI_PATH = st.secrets.get("DJI_PATH")
 
 START_DATE = st.secrets.get("START_DATE", "2020-10-01")
 END_DATE = st.secrets.get("END_DATE", "2025-03-31")
 
-BEST_THRESHOLD = float(st.secrets.get("BEST_THRESHOLD", 0.643535))
-PREDICTION_HORIZON_MONTHS = int(st.secrets.get("PREDICTION_HORIZON_MONTHS", 3))
+BEST_THRESHOLD = float(st.secrets.get("BEST_THRESHOLD))
+PREDICTION_HORIZON_MONTHS = int(st.secrets.get("PREDICTION_HORIZON_MONTHS"))
 
 st.set_page_config(page_title="Recession Predictor", layout="centered")
 st.title("📉 Recession Forecasting App")
