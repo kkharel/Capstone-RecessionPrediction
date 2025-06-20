@@ -1,11 +1,11 @@
 import streamlit as st
 import pandas as pd
 import joblib
-import tempfile
-import requests
 from datetime import datetime
 import data_pull, data_cleaning, growth_detection, log_transform, make_stationary
 from feature_engineering import FeatureEngineer
+import tempfile
+import requests
 
 # --- CONFIG ---
 MODEL_PATH = st.secrets.get("MODEL_PATH", "models/Bagging_Classifier_best_pipeline.pkl")
@@ -16,16 +16,14 @@ DJI_URL = st.secrets.get("DJI_URL", "https://raw.githubusercontent.com/kkharel/C
 
 START_DATE = st.secrets.get("START_DATE", "2020-10-01")
 END_DATE = st.secrets.get("END_DATE", "2025-03-31")
-
 BEST_THRESHOLD = float(st.secrets.get("BEST_THRESHOLD", 0.643535))
 PREDICTION_HORIZON_MONTHS = int(st.secrets.get("PREDICTION_HORIZON_MONTHS", 3))
 
-# --- APP HEADER ---
+# --- STREAMLIT UI ---
 st.set_page_config(page_title="Recession Predictor", layout="centered")
 st.title("📉 Recession Forecasting App")
 st.markdown("This app predicts upcoming recessions based on macroeconomic indicators.")
 
-# --- LOAD MODEL ---
 @st.cache_resource
 def load_model(path):
     try:
@@ -35,25 +33,22 @@ def load_model(path):
         st.error(f"❌ Error loading model: {e}")
         return None
 
-# --- DOWNLOAD CSV FROM GITHUB ---
 @st.cache_data
 def download_and_save_temp_csv(url):
     try:
         st.info(f"📥 Downloading: {url}")
         response = requests.get(url)
         if response.status_code != 200:
-            raise Exception(f"Failed to download file. Status code: {response.status_code}")
-
+            raise Exception(f"Failed to download from {url}")
         tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".csv")
         tmp.write(response.content)
         tmp.close()
         st.success(f"✅ Downloaded and saved: {tmp.name}")
         return tmp.name
     except Exception as e:
-        st.error(f"❌ Error downloading {url}: {e}")
+        st.error(f"❌ Failed to download CSV: {e}")
         return None
 
-# --- PREPARE DATA ---
 @st.cache_data
 def prepare_data():
     try:
@@ -67,7 +62,7 @@ def prepare_data():
         dji_path = download_and_save_temp_csv(DJI_URL)
 
         if None in [gold_path, sp500_path, dji_path]:
-            raise FileNotFoundError("❌ One or more CSV files failed to download.")
+            raise FileNotFoundError("One or more files failed to download.")
 
         cleaned_df = data_cleaning.clean_economic_data(
             economic_data=raw_df,
@@ -84,7 +79,6 @@ def prepare_data():
         st.error(f"❌ Data preparation failed: {e}")
         return None
 
-# --- PREDICT ---
 def predict_recession(cleaned_df, model):
     try:
         growth_flags = growth_detection.detect_exponential_growth_in_df(cleaned_df, time_col='date', verbose=False)
@@ -111,34 +105,34 @@ def predict_recession(cleaned_df, model):
                 "Probability": round(probabilities[i], 4),
                 "Prediction": "RECESSION" if thresholded_preds[i] == 1 else "No Recession"
             })
-
         return pd.DataFrame(results)
 
     except Exception as e:
-        st.error(f"❌ Prediction failed: {e}")
+        st.error(f"❌ Prediction step failed: {e}")
         return None
 
 # --- MAIN FLOW ---
 model = load_model(MODEL_PATH)
 if model:
     st.success("✅ Model loaded successfully!")
-
     st.info("🔄 Preparing and predicting...")
-    cleaned_df = prepare_data()
 
+    cleaned_df = prepare_data()
     if cleaned_df is not None:
         results_df = predict_recession(cleaned_df, model)
-
-        if results_df is not None:
+        if results_df is not None and not results_df.empty:
             st.dataframe(results_df, use_container_width=True)
 
             if (results_df['Prediction'] == "RECESSION").any():
                 st.warning("⚠️ Recession likely in some upcoming periods!")
             else:
-                st.success("🎉 No recession forecasted in the upcoming periods.")
+                st.success("✅ No recession forecasted in the upcoming periods.")
 
             csv = results_df.to_csv(index=False).encode("utf-8")
             st.download_button("📥 Download Predictions as CSV", csv, "recession_predictions.csv", "text/csv")
-
+        else:
+            st.error("Prediction failed: No results generated.")
+    else:
+        st.error("Data preparation failed.")
 else:
-    st.error("❌ Model failed to load. Please check your model path.")
+    st.error("❌ Failed to load model. Please check the model path and try again.")
