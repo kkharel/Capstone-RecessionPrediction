@@ -9,6 +9,9 @@ import os # Import the os module for path manipulation
 import data_pull, data_cleaning, growth_detection, log_transform, make_stationary
 from feature_engineering import FeatureEngineer
 
+# --- GITHUB LINK ---
+st.markdown("🔗 [GitHub Repository](https://github.com/kkharel/Capstone-RecessionPrediction)")
+
 # --- CONFIG ---
 st.set_page_config(page_title="Recession Predictor", layout="centered")
 st.title("📉 Recession Forecasting App")
