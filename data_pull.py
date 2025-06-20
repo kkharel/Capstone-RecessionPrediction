@@ -5,6 +5,9 @@ import logging
 import pandas as pd
 import requests
 from project_config import API_KEY
+import streamlit as st
+
+API_KEY = st.secrets["API_KEY"]
 
 logging.basicConfig(level = logging.INFO, format = "%(asctime)s — %(levelname)s — %(message)s")
 logger = logging.getLogger(__name__)
