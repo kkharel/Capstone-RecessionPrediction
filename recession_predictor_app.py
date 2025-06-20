@@ -4,6 +4,9 @@ import joblib
 import requests
 import tempfile
 from datetime import datetime
+import os # Import the os module for path manipulation
+
+# Assuming these modules are available in your environment
 import data_pull, data_cleaning, growth_detection, log_transform, make_stationary
 from feature_engineering import FeatureEngineer
 
@@ -53,7 +56,12 @@ def download_and_save_temp_csv(url):
 @st.cache_data
 def prepare_data():
     try:
-        raw_df = data_pull.pull_economic_data(output_path=None)
+        # Create a temporary directory to pass as output_path to data_pull.pull_economic_data
+        # This resolves the 'NoneType' error if data_pull expects a path-like object
+        with tempfile.TemporaryDirectory() as tmpdir:
+            temp_output_path = os.path.join(tmpdir, "economic_data.csv")
+            raw_df = data_pull.pull_economic_data(output_path=temp_output_path)
+        
         if raw_df is None or not isinstance(raw_df, pd.DataFrame) or raw_df.empty:
             raise ValueError("Raw economic data could not be loaded or is empty.")
 
@@ -69,7 +77,7 @@ def prepare_data():
             gold_data_path=gold_path,
             sp500_data_path=sp500_path,
             dji_data_path=dji_path,
-            output_path=None,
+            output_path=None, # This output_path is for data_cleaning, which might handle None correctly
             start_date=START_DATE,
             end_date=END_DATE
         )
@@ -95,7 +103,15 @@ def predict_recession(cleaned_df, model):
         lag_periods=[3, 6],
         rolling_windows=[3, 6]
     )
-    X_transformed = fe.fit_transform(stationary_df.copy())
+    # Ensure that fit_transform is called on a copy if fe might modify it in place
+    X_transformed = fe.fit_transform(stationary_df.copy()) 
+    
+    # Handle potential missing columns in X_transformed vs model's expected features
+    # If the model was trained on a specific set of columns, align them
+    # This assumes model.predict_proba will handle missing columns gracefully or raises an error.
+    # If columns might be missing or in wrong order, you might need to reindex X_transformed
+    # For example: X_transformed = X_transformed[model.feature_names_in_] (if model stores them)
+
     probabilities = model.predict_proba(X_transformed)[:, 1]
     thresholded_preds = (probabilities >= BEST_THRESHOLD).astype(int)
 
