@@ -4,6 +4,8 @@ import joblib
 from datetime import datetime
 import data_pull, data_cleaning, growth_detection, log_transform, make_stationary
 from feature_engineering import FeatureEngineer
+import tempfile
+import requests
 
 # --- CONFIG ---
 MODEL_PATH = st.secrets.get("MODEL_PATH", "models/Bagging_Classifier_best_pipeline.pkl")
@@ -31,23 +33,36 @@ def load_model(path):
     except Exception as e:
         st.error(f"Error loading model: {e}")
         return None
-
+        
+@st.cache_data
+def download_and_save_temp_csv(url):
+    response = requests.get(url)
+    if response.status_code != 200:
+        raise Exception(f"Failed to download from {url}")
+    
+    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".csv")
+    tmp.write(response.content)
+    tmp.close()
+    return tmp.name
 
 @st.cache_data
 def prepare_data():
     raw_df = data_pull.pull_economic_data(output_path=None)
 
+    gold_path = download_and_save_temp_csv(GOLD_URL)
+    sp500_path = download_and_save_temp_csv(SP500_URL)
+    dji_path = download_and_save_temp_csv(DJI_URL)
+
     cleaned_df = data_cleaning.clean_economic_data(
         economic_data=raw_df,
-        gold_data_path=GOLD_URL,       
-        sp500_data_path=SP500_URL,
-        dji_data_path=DJI_URL,
+        gold_data_path=gold_path,
+        sp500_data_path=sp500_path,
+        dji_data_path=dji_path,
         output_path=None,
         start_date=START_DATE,
         end_date=END_DATE
     )
     return cleaned_df
-
 def predict_recession(cleaned_df, model):
     growth_flags = growth_detection.detect_exponential_growth_in_df(cleaned_df, time_col='date', verbose=False)
     df_transformed = log_transform.apply_log_transform(cleaned_df, growth_flags)
