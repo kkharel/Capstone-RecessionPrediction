@@ -55,12 +55,20 @@ def download_and_save_temp_csv(url):
 
 @st.cache_data
 def prepare_data():
+    temp_output_path = None # Initialize to None for cleanup in finally block
+    gold_path = None
+    sp500_path = None
+    dji_path = None
+
     try:
-        # Create a temporary directory to pass as output_path to data_pull.pull_economic_data
-        # This resolves the 'NoneType' error if data_pull expects a path-like object
-        with tempfile.TemporaryDirectory() as tmpdir:
-            temp_output_path = os.path.join(tmpdir, "economic_data.csv")
-            raw_df = data_pull.pull_economic_data(output_path=temp_output_path)
+        # Use NamedTemporaryFile for raw economic data as well, consistent with others
+        tmp_raw_data_file = tempfile.NamedTemporaryFile(delete=False, suffix=".csv")
+        temp_output_path = tmp_raw_data_file.name
+        tmp_raw_data_file.close() # Close the file handle immediately, data_pull will reopen or overwrite
+
+        st.write(f"DEBUG: temp_output_path for data_pull: {temp_output_path}") # Diagnostic print
+
+        raw_df = data_pull.pull_economic_data(output_path=temp_output_path)
         
         if raw_df is None or not isinstance(raw_df, pd.DataFrame) or raw_df.empty:
             raise ValueError("Raw economic data could not be loaded or is empty.")
@@ -90,6 +98,23 @@ def prepare_data():
     except Exception as e:
         st.error(f"❌ Data preparation failed: {e}")
         return None
+    finally:
+        # Attempt to clean up temporary files
+        if temp_output_path and os.path.exists(temp_output_path):
+            try:
+                os.remove(temp_output_path)
+                st.write(f"DEBUG: Cleaned up temporary raw data file: {temp_output_path}")
+            except OSError as e:
+                st.warning(f"Could not remove temporary raw data file {temp_output_path}: {e}")
+        
+        for path_var in [gold_path, sp500_path, dji_path]:
+            if path_var and os.path.exists(path_var):
+                try:
+                    os.remove(path_var)
+                    st.write(f"DEBUG: Cleaned up temporary asset file: {path_var}")
+                except OSError as e:
+                    st.warning(f"Could not remove temporary asset file {path_var}: {e}")
+
 
 def predict_recession(cleaned_df, model):
     growth_flags = growth_detection.detect_exponential_growth_in_df(cleaned_df, time_col='date', verbose=False)
