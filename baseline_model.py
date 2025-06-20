@@ -20,7 +20,18 @@ from utils import (
     plot_roc_pr_curves,
     summarize_feature_importance
 )
-from project_config import TARGET, RANDOM_STATE
+# from project_config import TARGET, RANDOM_STATE
+
+import streamlit as st
+from datetime import datetime
+
+# Load secrets
+API_KEY = st.secrets["API_KEY"]
+TARGET = st.secrets["TARGET"]
+PREDICTION_HORIZON_MONTHS = int(st.secrets["PREDICTION_HORIZON_MONTHS"])
+MAIN_TRAIN_TEST_SPLIT_DATE = datetime.strptime(st.secrets["MAIN_TRAIN_TEST_SPLIT_DATE"], "%Y-%m-%d")
+N_ITER_SEARCH = int(st.secrets["N_ITER_SEARCH"])
+RANDOM_STATE = int(st.secrets["RANDOM_STATE"])
 
 warnings.filterwarnings("ignore")
 set_config(display='diagram')
