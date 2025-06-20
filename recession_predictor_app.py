@@ -58,6 +58,11 @@ def prepare_data():
     sp500_path = download_and_save_temp_csv(SP500_URL)
     dji_path = download_and_save_temp_csv(DJI_URL)
 
+    # Check for NoneType
+    if None in [gold_path, sp500_path, dji_path]:
+        st.error("One or more CSV files could not be downloaded.")
+        raise FileNotFoundError("Missing file path for required dataset.")
+
     cleaned_df = data_cleaning.clean_economic_data(
         economic_data=raw_df,
         gold_data_path=gold_path,
