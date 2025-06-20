@@ -59,6 +59,9 @@ def prepare_data():
     try:
         raw_df = data_pull.pull_economic_data(output_path=None)
 
+        if raw_df is None or not isinstance(raw_df, pd.DataFrame) or raw_df.empty:
+            raise ValueError("Raw economic data could not be loaded or is empty.")
+
         gold_path = download_and_save_temp_csv(GOLD_URL)
         sp500_path = download_and_save_temp_csv(SP500_URL)
         dji_path = download_and_save_temp_csv(DJI_URL)
