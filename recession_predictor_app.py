@@ -41,7 +41,21 @@ def load_model(path):
 @st.cache_data
 def load_data(path):
     try:
-        df = pd.read_csv(path, parse_dates=["date"], index_col="date")
+        # Load without parse_dates first to inspect columns
+        df_raw = pd.read_csv(path)
+        st.write("Columns in CSV:", df_raw.columns.tolist())
+        
+        # Now use correct date column name, e.g., "Date" instead of "date"
+        date_col = None
+        for col in ['date', 'Date', 'DATE', 'time', 'Time']:
+            if col in df_raw.columns:
+                date_col = col
+                break
+        if date_col is None:
+            raise ValueError("No suitable date column found in CSV.")
+
+        # Reload with date parsing and index
+        df = pd.read_csv(path, parse_dates=[date_col], index_col=date_col)
         if not isinstance(df.index, pd.DatetimeIndex):
             raise TypeError("Data index is not a DatetimeIndex. Please check date parsing.")
         return df
