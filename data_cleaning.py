@@ -2,8 +2,6 @@
 import os
 import pandas as pd
 import logging
-# Assuming data_pull is available in the same context or correctly imported
-# from data_pull import pull_economic_data # Uncomment if pull_economic_data is from a separate module
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
