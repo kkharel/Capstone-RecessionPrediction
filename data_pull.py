@@ -7,8 +7,6 @@ import requests
 # from project_config import API_KEY
 import streamlit as st
 
-API_KEY = st.secrets['FRED_API_KEY']
-
 logging.basicConfig(level = logging.INFO, format = "%(asctime)s — %(levelname)s — %(message)s")
 logger = logging.getLogger(__name__)
 
@@ -68,41 +66,69 @@ indicators = {
     "NBER based Recession Indicators for the United States from the Period following the Peak through the Trough": "USREC"
 }
 
-
 def fetch_fred_data(series_id):
-    url = f"https://api.stlouisfed.org/fred/series/observations?series_id={series_id}&api_key={API_KEY}&file_type=json"
-    response = requests.get(url)
-    if response.status_code != 200:
-        logging.error(f"HTTP error {response.status_code} for series {series_id}")
-        return pd.DataFrame(columns = ["date", series_id])
-    data = response.json()
+    api_key = st.secrets.get("FRED_API_KEY")
+    if not api_key:
+        logger.error("❌ Missing FRED_API_KEY in secrets.")
+        return pd.DataFrame(columns=["date", series_id])
 
+    url = (
+        f"https://api.stlouisfed.org/fred/series/observations?"
+        f"series_id={series_id}&api_key={api_key}&file_type=json"
+    )
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (compatible; StreamlitBot/1.0)"  # Helps avoid 403
+    }
+
+    response = requests.get(url, headers=headers)
+    if response.status_code != 200:
+        logger.error(f"❌ HTTP {response.status_code} error for series {series_id}")
+        return pd.DataFrame(columns=["date", series_id])
+
+    data = response.json()
     if "observations" not in data:
-        logging.error(f"Error fetching data for series {series_id}: {data}")
-        return pd.DataFrame(columns = ["date", series_id])
+        logger.error(f"❌ No 'observations' in response for {series_id}")
+        return pd.DataFrame(columns=["date", series_id])
 
     df = pd.DataFrame(data["observations"])
     df["date"] = pd.to_datetime(df["date"])
     df["value"] = df["value"].replace(".", None).astype(float)
+    return df[["date", "value"]].rename(columns={"value": series_id})
 
-    return df[["date", "value"]].rename(columns = {"value": series_id})
 
-def pull_economic_data(output_path = None):
+# --- Pull and merge all indicators ---
+def pull_economic_data(output_path=None):
     raw_economic_data = None
+
     for name, series in indicators.items():
-        logging.info(f"Fetching {name} ({series})...")
+        logger.info(f"📊 Fetching {name} ({series})...")
         df = fetch_fred_data(series)
+
+        if df.empty:
+            logger.warning(f"⚠️ No data returned for {series}, skipping...")
+            continue
+
         if raw_economic_data is None:
             raw_economic_data = df
         else:
-            raw_economic_data = raw_economic_data.merge(df, on = "date", how = "outer")
+            raw_economic_data = pd.merge(raw_economic_data, df, on="date", how="outer")
 
-    if output_path is not None:
-        os.makedirs(os.path.dirname(output_path), exist_ok = True)
-        raw_economic_data.to_csv(output_path, index = False)
-        logging.info(f"Data fetched and saved to {output_path}")
+    if raw_economic_data is None or raw_economic_data.empty:
+        logger.error("❌ All indicators failed to fetch. Exiting.")
+        return pd.DataFrame()
+
+    raw_economic_data.sort_values("date", inplace=True)
+
+    if output_path:
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        raw_economic_data.to_csv(output_path, index=False)
+        logger.info(f"✅ Data saved to {output_path}")
 
     return raw_economic_data
 
+
+# For local testing only
 if __name__ == "__main__":
-    pull_economic_data()    
+    df = pull_economic_data("data/economic_data.csv")
+    print(df.head())
