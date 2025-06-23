@@ -1,3 +1,71 @@
+# data pull file
+
+import os
+import logging
+import pandas as pd
+import requests
+# from project_config import API_KEY
+import streamlit as st
+
+logging.basicConfig(level = logging.INFO, format = "%(asctime)s — %(levelname)s — %(message)s")
+logger = logging.getLogger(__name__)
+
+# List of economic indicators and their FRED series IDs
+
+indicators = {
+    "Industrial Production": "INDPRO",
+    "Capacity Utilization": "TCU", 
+    "Brave-Butters-Kelley Real Gross Domestic Product": "BBKMGDP",  
+
+    # Labor Market Data
+    "Unemployment Rate": "UNRATE",
+    "Total Nonfarm Employment": "PAYEMS", 
+    "Labor Force Participation": "CIVPART", 
+    "Civilian Labor Force": "CLF16OV", 
+
+    # Inflation & Prices Data
+    "CPI (Inflation)": "CPIAUCSL", 
+    "Core CPI": "CPILFESL",
+    "PPI (Wholesale Inflation)": "PPIACO", 
+
+    # Monetary & Financial Data
+    "Federal Funds Rate": "FEDFUNDS", 
+    "Real M1 Money Supply": "M1SL", 
+    "Real M2 Money Supply": "M2SL", 
+
+    # Interest Rate Data
+    "10-Year Treasury Constant Maturity Rate": "GS10", 
+    "5-Year Treasury Constant Maturity Rate": "GS5", 
+    "7-Year Treasury Constant Maturity Rate": "GS7", 
+    "30-Year Treasury Constant Maturity Rate": "GS30", 
+    "3-Year Treasury Constant Maturity Rate": "GS3", 
+    "2-Year Treasury Constant Maturity Rate": "GS2", 
+    "1-Year Treasury Constant Maturity Rate": "GS1", 
+    # "3-Month Treasury Constant Maturity Rate": "GS3M", 
+
+    # Consumer and Business Sentiment Data
+    "Consumer Sentiment": "UMCSENT", 
+    'Personal Consumption Expenditures': 'PCE',
+    'Real Disposable Personal Income': 'DSPIC96',
+    "Total Consumer Credit": "TOTALSL", 
+
+    # Trade Data
+    "Trade Balance": "NETEXP", 
+    # "Exports of Goods and Services": "EXPGS", 
+    # "Imports of Goods and Services": "IMPGS", 
+
+    # Housing Data
+    "New Private Housing Units Authorized by Building Permits": "PERMIT", 
+    "New Private Housing Units Started": "HOUST", 
+    "Median Sales Price for New Houses Sold in the United States": "MSPNHSUS",
+
+    # Productivity Data
+    "Nonfarm Business Sector: Real Output per Hour of All Persons": "OPHNFB", 
+
+
+    "NBER based Recession Indicators for the United States from the Period following the Peak through the Trough": "USREC"
+}
+
 # --- GitHub fallback CSV ---
 GITHUB_FALLBACK_CSV = st.secrets.get(
     "DATA_PATH",
@@ -71,7 +139,7 @@ def pull_economic_data(output_path=None):
         return pd.DataFrame()
 
 
-# --- For local testing ---
+# For local testing
 if __name__ == "__main__":
     df = pull_economic_data("data/economic_data.csv")
     print(df.head())
