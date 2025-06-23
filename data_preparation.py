@@ -1,11 +1,18 @@
 # data preparation for model consumption
 
-from project_config import TARGET, PREDICTION_HORIZON_MONTHS, MAIN_TRAIN_TEST_SPLIT_DATE
+# from project_config import TARGET, PREDICTION_HORIZON_MONTHS, MAIN_TRAIN_TEST_SPLIT_DATE
 from feature_engineering import FeatureEngineer
 from preprocessor import get_preprocessor
 import pandas as pd
 import numpy as np
 import logging
+from datetime import datetime
+import streamlit as st
+
+TARGET = st.secrets["TARGET"]
+PREDICTION_HORIZON_MONTHS = int(st.secrets["PREDICTION_HORIZON_MONTHS"])
+MAIN_TRAIN_TEST_SPLIT_DATE = datetime.strptime(st.secrets["MAIN_TRAIN_TEST_SPLIT_DATE"], "%Y-%m-%d")
+
 
 logging.basicConfig(level = logging.INFO, format = '%(asctime)s %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)

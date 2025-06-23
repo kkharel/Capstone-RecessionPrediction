@@ -8,8 +8,8 @@ from feature_engineering import FeatureEngineer
 # --- CONFIG ---
 MODEL_PATH = 'models/Bagging_Classifier_best_pipeline.pkl'
 GOLD_PATH = 'data/gold.csv'
-SP500_PATH = 'data/sp500.csv'
-DJI_PATH = 'data/dji.csv'
+SP500_PATH = 'data/SP500.csv'
+DJI_PATH = 'data/DJI.csv'
 START_DATE = "2020-10-01"
 END_DATE = "2025-03-31"
 BEST_THRESHOLD = 0.643535

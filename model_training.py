@@ -1,6 +1,6 @@
 # model training and hyperparamter tunings
 
-from project_config import RANDOM_STATE, N_ITER_SEARCH
+# from project_config import RANDOM_STATE, N_ITER_SEARCH
 import logging
 import joblib
 from datetime import datetime
@@ -20,6 +20,10 @@ import custom_cv
 import pandas as pd
 from sklearn.metrics import make_scorer, f1_score
 import warnings
+import streamlit as st
+
+N_ITER_SEARCH = int(st.secrets["N_ITER_SEARCH"])
+RANDOM_STATE = int(st.secrets["RANDOM_STATE"])
 
 warnings.filterwarnings("ignore")
 
