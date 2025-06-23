@@ -7,8 +7,8 @@ from sklearn.base import BaseEstimator, TransformerMixin
 import logging
 # from project_config import PREDICTION_HORIZON_MONTHS
 import streamlit as st
-# PREDICTION_HORIZON_MONTHS = 3
-PREDICTION_HORIZON_MONTHS = int(st.secrets["PREDICTION_HORIZON_MONTHS"])
+PREDICTION_HORIZON_MONTHS = 3
+# PREDICTION_HORIZON_MONTHS = int(st.secrets["PREDICTION_HORIZON_MONTHS"])
 
 logging.basicConfig(level = logging.INFO, format = '%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)

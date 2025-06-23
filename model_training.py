@@ -21,6 +21,7 @@ import pandas as pd
 from sklearn.metrics import make_scorer, f1_score
 import warnings
 import streamlit as st
+from sklearn.feature_selection import SelectFromModel
 
 N_ITER_SEARCH = int(st.secrets["N_ITER_SEARCH"])
 RANDOM_STATE = int(st.secrets["RANDOM_STATE"])
