@@ -7,6 +7,8 @@ import requests
 # from project_config import API_KEY
 import streamlit as st
 
+API_KEY = st.secrets['FRED_API_KEY']
+
 logging.basicConfig(level = logging.INFO, format = "%(asctime)s — %(levelname)s — %(message)s")
 logger = logging.getLogger(__name__)
 
@@ -66,80 +68,41 @@ indicators = {
     "NBER based Recession Indicators for the United States from the Period following the Peak through the Trough": "USREC"
 }
 
-# --- GitHub fallback CSV ---
-GITHUB_FALLBACK_CSV = st.secrets.get(
-    "DATA_PATH",
-    "https://raw.githubusercontent.com/kkharel/Capstone-RecessionPrediction/main/data/deployment_test.csv"
-)
 
-# --- Fetch a FRED series ---
 def fetch_fred_data(series_id):
-    api_key = st.secrets.get("FRED_API_KEY")
-    if not api_key:
-        logger.error("❌ FRED_API_KEY not found in st.secrets.")
-        return pd.DataFrame(columns=["date", series_id])
-
-    url = (
-        f"https://api.stlouisfed.org/fred/series/observations?"
-        f"series_id={series_id}&api_key={api_key}&file_type=json"
-    )
-
-    headers = {
-        "User-Agent": "Mozilla/5.0 (compatible; StreamlitBot/1.0)"
-    }
-
-    response = requests.get(url, headers=headers)
+    url = f"https://api.stlouisfed.org/fred/series/observations?series_id={series_id}&api_key={API_KEY}&file_type=json"
+    response = requests.get(url)
     if response.status_code != 200:
-        logger.error(f"HTTP {response.status_code} for series {series_id}")
-        return pd.DataFrame(columns=["date", series_id])
-
+        logging.error(f"HTTP error {response.status_code} for series {series_id}")
+        return pd.DataFrame(columns = ["date", series_id])
     data = response.json()
+
     if "observations" not in data:
-        logger.error(f"No observations in response for {series_id}")
-        return pd.DataFrame(columns=["date", series_id])
+        logging.error(f"Error fetching data for series {series_id}: {data}")
+        return pd.DataFrame(columns = ["date", series_id])
 
     df = pd.DataFrame(data["observations"])
     df["date"] = pd.to_datetime(df["date"])
     df["value"] = df["value"].replace(".", None).astype(float)
-    return df[["date", "value"]].rename(columns={"value": series_id})
 
+    return df[["date", "value"]].rename(columns = {"value": series_id})
 
-# --- Pull full economic dataset ---
-def pull_economic_data(output_path=None):
+def pull_economic_data(output_path = None):
     raw_economic_data = None
-    successful_series = 0
-
     for name, series in indicators.items():
-        logger.info(f"📊 Fetching {name} ({series})...")
+        logging.info(f"Fetching {name} ({series})...")
         df = fetch_fred_data(series)
+        if raw_economic_data is None:
+            raw_economic_data = df
+        else:
+            raw_economic_data = raw_economic_data.merge(df, on = "date", how = "outer")
 
-        if df.empty:
-            logger.warning(f"⚠️ No data returned for {series}")
-            continue
+    if output_path is not None:
+        os.makedirs(os.path.dirname(output_path), exist_ok = True)
+        raw_economic_data.to_csv(output_path, index = False)
+        logging.info(f"Data fetched and saved to {output_path}")
 
-        successful_series += 1
-        raw_economic_data = df if raw_economic_data is None else raw_economic_data.merge(df, on="date", how="outer")
+    return raw_economic_data
 
-    if raw_economic_data is not None and not raw_economic_data.empty:
-        raw_economic_data.sort_values("date", inplace=True)
-        if output_path:
-            os.makedirs(os.path.dirname(output_path), exist_ok=True)
-            raw_economic_data.to_csv(output_path, index=False)
-            logger.info(f"✅ Saved FRED data to {output_path}")
-        return raw_economic_data
-
-    # 🔁 Fallback to GitHub CSV
-    logger.error("❌ All FRED data fetches failed — switching to fallback CSV.")
-    try:
-        fallback_df = pd.read_csv(GITHUB_FALLBACK_CSV, parse_dates=["date"])
-        logger.info(f"✅ Loaded fallback CSV from GitHub: {GITHUB_FALLBACK_CSV}")
-        return fallback_df
-    except Exception as e:
-        logger.critical(f"❌ Failed to load fallback CSV: {e}")
-        return pd.DataFrame()
-
-
-# For local testing
 if __name__ == "__main__":
-    df = pull_economic_data("data/economic_data.csv")
-    print(df.head())
+    pull_economic_data()    
