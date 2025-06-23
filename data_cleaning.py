@@ -2,7 +2,7 @@
 import os
 import pandas as pd
 import logging
-
+import data_pull 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
 
@@ -20,8 +20,6 @@ def clean_economic_data(
         # Pull economic data only if not provided
         if economic_data is None:
             logger.info("Pulling economic data from FRED API...")
-            # Assuming pull_economic_data is defined or imported correctly
-            # If data_pull is a module, it should be `data_pull.pull_economic_data`
             economic_data = data_pull.pull_economic_data(output_path=None) # Pass None for output here as well
         else:
             logger.info("Using pre-fetched economic data...")
@@ -30,7 +28,6 @@ def clean_economic_data(
             logger.error("Initial economic data is empty or None. Cannot proceed with cleaning.")
             return pd.DataFrame() # Return an empty DataFrame to indicate failure
 
-        # Ensure 'date' column is datetime and sort
         economic_data['date'] = pd.to_datetime(economic_data['date'])
         economic_data = economic_data.sort_values('date').reset_index(drop=True)
         logger.info(f"Economic data shape after initial sort: {economic_data.shape}")
@@ -103,14 +100,12 @@ def clean_economic_data(
         dj_data = pd.read_csv(dji_data_path, parse_dates=["Date"])
         dj_data.rename(columns={'Date': 'date', 'Price': 'DJI'}, inplace=True)
         dj_data = dj_data[['date', 'DJI']]
-        # This was already present, ensuring consistency
+
         dj_data['date'] = dj_data['date'].apply(lambda d: d.replace(day=1))
         dj_data = dj_data.groupby('date').last().reset_index() # Take the last price for the first day of month
         logger.info(f"Shape of dj_data after parsing and day=1 adjustment: {dj_data.shape}")
         logger.info(f"Dates in dj_data: {dj_data['date'].min()} to {dj_data['date'].max()}")
 
-        # Use merge_asof for better handling of potentially misaligned dates in real-world data
-        # especially if one dataset has dates like '2020-01-01' and another '2020-01-02'
         final_df = pd.merge_asof(
             sp.sort_values('date'),
             dj_data.sort_values('date'),
@@ -119,8 +114,6 @@ def clean_economic_data(
         )
 
         logger.info(f"Shape after left merging with DJI (before final dropna): {final_df.shape}")
-        # Dropping rows where *any* of the newly merged columns (gold, SP500, DJI) are NaN
-        # This is more robust than a generic dropna if you only care about the merged data being complete
         final_df.dropna(subset=['gold', 'SP500', 'DJI'] + quarterly_cols, inplace=True)
         logger.info(f"Final DataFrame shape after specific dropna: {final_df.shape}")
         if final_df.empty:
@@ -169,8 +162,6 @@ def clean_economic_data(
         return pd.DataFrame() # Return empty DataFrame on error
 
 if __name__ == "__main__":
-    # Example usage:
-    # This will now print to console if run directly
     cleaned_data = clean_economic_data(output_path="data/test_cleaned_data.csv",
                                         start_date="2000-01-01",
                                         end_date="2023-12-31")
