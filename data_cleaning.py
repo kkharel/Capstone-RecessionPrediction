@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 import logging
-from data_pull import pull_economic_data # Assuming data_pull.py is in the same directory
+from data_pull import pull_economic_data
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
