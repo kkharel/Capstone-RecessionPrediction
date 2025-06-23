@@ -20,7 +20,13 @@ from utils import (
     plot_roc_pr_curves,
     summarize_feature_importance
 )
-from project_config import TARGET, RANDOM_STATE
+# from project_config import TARGET, RANDOM_STATE
+import streamlit as st
+
+# Load secrets
+TARGET = st.secrets["TARGET"]
+RANDOM_STATE = int(st.secrets["RANDOM_STATE"])
+
 
 warnings.filterwarnings("ignore")
 set_config(display='diagram')
